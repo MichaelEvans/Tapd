@@ -10,7 +10,8 @@ import com.google.gson.annotations.SerializedName;
 
 public class Order implements Parcelable{
 	private int id;
-	private User user;
+	private OrderUser user;
+	@SerializedName("total")
 	private double price;
 	@SerializedName("restaurant_name")
 	private String restarauntName;
@@ -19,11 +20,11 @@ public class Order implements Parcelable{
 
     protected Order(Parcel in) {
         id = in.readInt();
-        user = (User)in.readValue(null);
+        user = in.readParcelable(OrderUser.class.getClassLoader());
         price = in.readDouble();
         restarauntName = in.readString();
         orderItems = new ArrayList<OrderItem>();
-        in.readList(orderItems, null);
+        in.readTypedList(orderItems, OrderItem.CREATOR);
     }
 
     public int describeContents() {
@@ -32,10 +33,10 @@ public class Order implements Parcelable{
 
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeInt(id);
-        dest.writeValue(user);
+        dest.writeParcelable(user, flags);
         dest.writeDouble(price);
         dest.writeString(restarauntName);
-        dest.writeList(orderItems);
+        dest.writeTypedList(orderItems);
     }
 
     public static final Parcelable.Creator<Order> CREATOR = new Parcelable.Creator<Order>() {
@@ -72,11 +73,11 @@ public class Order implements Parcelable{
 		this.orderItems = orderItems;
 	}
 
-	public User getUser() {
+	public OrderUser getUser() {
 		return user;
 	}
 
-	public void setUser(User user) {
+	public void setUser(OrderUser user) {
 		this.user = user;
 	}
 

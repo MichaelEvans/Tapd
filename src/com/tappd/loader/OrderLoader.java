@@ -2,6 +2,7 @@ package com.tappd.loader;
 
 import android.content.AsyncTaskLoader;
 import android.content.Context;
+import android.util.Log;
 
 import com.github.kevinsawicki.http.HttpRequest;
 import com.google.gson.Gson;
@@ -11,6 +12,7 @@ public class OrderLoader extends AsyncTaskLoader<Order> {
 
     Order mOrder;
     Gson mGson = new Gson();
+    String orderId;
     public OrderLoader(Context context) {
         super(context);
 
@@ -20,7 +22,12 @@ public class OrderLoader extends AsyncTaskLoader<Order> {
         
     }
 
-    /**
+    public OrderLoader(Context context, String string) {
+		super(context);
+		orderId = string;
+	}
+
+	/**
      * This is where the bulk of our work is done.  This function is
      * called in a background thread and should generate a new set of
      * data to be published by the loader.
@@ -32,7 +39,10 @@ public class OrderLoader extends AsyncTaskLoader<Order> {
         final Context context = getContext();
         Order order = null;
         // Create corresponding array of entries and load their labels.
-        HttpRequest request = HttpRequest.get("http://tapdservice.herokuapp.com/orders/1");
+        if(orderId == null)
+        	orderId = "1";
+        Log.e("FETCH", "http://tapdservice.herokuapp.com/orders/" + orderId);
+        HttpRequest request = HttpRequest.get("http://tapdservice.herokuapp.com/orders/" + orderId);
 		int response = request.code();
         if(response == 200){
         	String body = request.body();

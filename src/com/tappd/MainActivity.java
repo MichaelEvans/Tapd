@@ -78,11 +78,7 @@ public class MainActivity extends Activity implements ConnectionCallbacks, OnCon
 	public boolean onOptionsItemSelected(MenuItem item){
 		switch (item.getItemId()){
 		case R.id.action_swap: 
-//			startActivity (new Intent (this, PrefsActivity.class));
-//			break; 
-			FragmentTransaction ft = getFragmentManager().beginTransaction();
-			OrderFragment newFragment = OrderFragment.newInstance();
-			ft.replace(R.id.fragment, newFragment, "detailFragment").commit();
+			startActivity (new Intent (this, OrderActivity.class));
 			break;
 		} 
 		return true; 

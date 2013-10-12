@@ -38,7 +38,7 @@ public class PurchasesLoader extends AsyncTaskLoader<List<Order>> {
 		final Context context = getContext();
 		List<Order> order = null;
 		// Create corresponding array of entries and load their labels.
-		HttpRequest request = HttpRequest.get("http://tapdservice.herokuapp.com/users/1/orders");
+		HttpRequest request = HttpRequest.get("http://tapdservice.herokuapp.com/users/1/orders?count=20");
 		int response = request.code();
 		if(response == 200){
 			String body = request.body();
