@@ -2,4 +2,6 @@
 <resources>
     <color name="grey">#ff333333</color>
     <color name="application_background">#ffe5e5e5</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="midnight">#FF2c3e50</color>
 </resources>

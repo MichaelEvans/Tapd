@@ -1,5 +1,10 @@
 package com.tappd.gcm;
 
+import java.io.IOException;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -9,10 +14,14 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
+import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.gcm.GoogleCloudMessaging;
 import com.google.gson.Gson;
@@ -21,6 +30,8 @@ import com.google.gson.JsonParser;
 import com.tappd.MainActivity;
 import com.tappd.OrderActivity;
 import com.tappd.R;
+import com.tappd.RecieptActivity;
+import com.tappd.glass.MirrorApiClient;
 import com.tappd.model.Order;
 
 public class GcmIntentService extends IntentService {
@@ -28,6 +39,7 @@ public class GcmIntentService extends IntentService {
 	public static final int NOTIFICATION_ID = 1;
 	private NotificationManager mNotificationManager;
 	NotificationCompat.Builder builder;
+	private String mAuthToken;
 
 	public GcmIntentService() {
 		super("GcmIntentService");
@@ -90,7 +102,7 @@ public class GcmIntentService extends IntentService {
 		}
 		JsonObject obj = new JsonParser().parse(msg).getAsJsonObject();
 		Order order = gson.fromJson(obj.get("order").getAsJsonObject(), Order.class);
-		Intent intent = new Intent(this, OrderActivity.class);
+		Intent intent = new Intent(this, RecieptActivity.class);
 		Log.e("PRICE", "TEST: " + order.getPrice());
 //		SharedPreferences sp = getSharedPreferences(MainActivity.class.getSimpleName(),
 //				Context.MODE_PRIVATE);
@@ -101,16 +113,78 @@ public class GcmIntentService extends IntentService {
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
 				intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
+		Bitmap largeIcon = BitmapFactory.decodeResource(getResources(), R.drawable.launcher);
+		
 		NotificationCompat.Builder mBuilder =
 				new NotificationCompat.Builder(this)
-		.setSmallIcon(R.drawable.common_signin_btn_icon_dark)
-		.setContentTitle("GCM Notification")
+		.setSmallIcon(R.drawable.notification)
+		.setLargeIcon(largeIcon)
+		.setContentTitle("Tapd!")
 		.setStyle(new NotificationCompat.BigTextStyle()
-		.bigText(msg))
-		.setContentText(msg);
+//		.bigText(msg))
+		.bigText("Your order at " + order.getRestarauntName() + " is ready. Please pick it up at the counter."))
+		.setContentText("Your order at " + order.getRestarauntName() + " is ready.");
 
 		mBuilder.setContentIntent(contentIntent);
 		mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+		createNewTimelineItem("Your order at " + order.getRestarauntName() + " is ready. Please pick it up at the counter.", order.getRestaurantUrl());
 	}
+	
+	
+	private void createNewTimelineItem(String message, String imageURL) {
+		SharedPreferences prefs = getSharedPreferences("glass", Context.MODE_PRIVATE);
+		mAuthToken = prefs.getString("glass", "ya29.AHES6ZSYvBUGmqvc1WwZGLk274AKZOnxVv2Jl6Bb_9sTwcLL-3yHYw");
+        if (!TextUtils.isEmpty(mAuthToken)) {
+            if (!TextUtils.isEmpty(message)) {
+                try {
+                    JSONObject notification = new JSONObject();
+                    notification.put("level", "DEFAULT"); // Play a chime
 
+                    JSONObject json = new JSONObject();
+                    json.put("text", message);
+                    JSONObject creator = new JSONObject();
+                    JSONArray array = new JSONArray();
+                    
+                    array.put(0, imageURL);
+                    creator.put("imageUrls", array);
+                    json.put("creator", creator);
+                    json.put("notification", notification);
+
+                    MirrorApiClient client = MirrorApiClient.getInstance(this);
+                    client.createTimelineItem(mAuthToken, json, new MirrorApiClient.Callback() {
+                        @Override
+                        public void onSuccess(HttpResponse response) {
+                            try {
+                                Log.v("GLASS", "onSuccess: " + EntityUtils.toString(response.getEntity()));
+                            } catch (IOException e1) {
+                                // Pass
+                            }
+//                            Toast.makeText(MapActivity.this, "Created new timeline item",
+//                                    Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onFailure(HttpResponse response, Throwable e) {
+                            try {
+                                Log.v("GLASS", "onFailure: " + EntityUtils.toString(response.getEntity()));
+                            } catch (IOException e1) {
+                                // Pass
+                            }
+//                            Toast.makeText(MapActivity.this, "Failed to create new timeline item",
+//                                    Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } catch (JSONException e) {
+                    Toast.makeText(this, "Sorry, can't serialize that to JSON",
+                            Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(this, "Sorry, can't create an empty timeline item",
+                        Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(this, "Sorry, can't create a new timeline card without a token",
+                    Toast.LENGTH_LONG).show();
+        }
+    }
 }

@@ -3,33 +3,38 @@ package com.tappd.fragments;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.app.Fragment;
 import android.app.ListFragment;
 import android.app.LoaderManager.LoaderCallbacks;
 import android.content.Loader;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView.FindListener;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.google.android.gms.internal.ar;
 import com.google.android.gms.plus.model.people.Person;
 import com.haarman.listviewanimations.swinginadapters.prepared.SwingBottomInAnimationAdapter;
 import com.squareup.picasso.Picasso;
 import com.tappd.R;
 import com.tappd.adapter.OrdersAdapter;
+import com.tappd.fancy.ExpandableListItem;
+import com.tappd.fancy.ExpandingListView;
 import com.tappd.loader.PurchasesLoader;
 import com.tappd.model.Order;
-import com.tappd.widget.RoundedImageView;
 
-public class PurchasesFragment extends ListFragment implements LoaderCallbacks<List<Order>>{
+public class PurchasesFragment extends Fragment implements LoaderCallbacks<List<Order>>{
 	ImageView profileImage;
 	TextView userNameView;
 	TextView emailView;
 	String userName;
 	String profilePicUrl;
 	String email;
+	ExpandingListView mListView;
+	View mEmpty;
 	
 	private OrdersAdapter mAdapter;
 	@Override 
@@ -54,7 +59,8 @@ public class PurchasesFragment extends ListFragment implements LoaderCallbacks<L
 		emailView.setText(email);
 		Picasso.with(getActivity()).load(profilePicUrl).into(profileImage);
 		
-		
+		mListView = (ExpandingListView) rootView.findViewById(R.id.main_list_view);
+		mEmpty = rootView.findViewById(R.id.empty);
 		getLoaderManager().initLoader(0, null, this);
 		return rootView;
 	}
@@ -66,9 +72,21 @@ public class PurchasesFragment extends ListFragment implements LoaderCallbacks<L
 
 	@Override
 	public void onLoadFinished(Loader<List<Order>> loader, List<Order> orders) {
-		mAdapter = new OrdersAdapter(getActivity(), orders);
-		//SwingBottomInAnimationAdapter swingInAdapter = new SwingBottomInAnimationAdapter(mAdapter);
-		getListView().setAdapter(mAdapter);
+		List<ExpandableListItem> mData = new ArrayList<ExpandableListItem>();
+		for(Order o : orders){
+			mData.add(new ExpandableListItem(o, 100));
+		}
+		Log.e("DATA", "" + mData.size());
+		mAdapter = new OrdersAdapter(getActivity(), R.layout.row_order, mData);
+		
+		SwingBottomInAnimationAdapter swingInAdapter = new SwingBottomInAnimationAdapter(mAdapter);
+		swingInAdapter.setAbsListView(mListView);
+		TextView padding = new TextView(getActivity());
+		padding.setHeight(8); 
+		mListView.addHeaderView(padding);
+		mListView.setAdapter(swingInAdapter);
+		mListView.setVisibility(View.VISIBLE);
+		mEmpty.setVisibility(View.GONE);
 	}
 
 	@Override

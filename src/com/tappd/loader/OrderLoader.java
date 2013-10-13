@@ -1,12 +1,23 @@
 package com.tappd.loader;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.util.Log;
 
 import com.github.kevinsawicki.http.HttpRequest;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.tappd.model.Item;
 import com.tappd.model.Order;
+import com.tappd.model.OrderItem;
 
 public class OrderLoader extends AsyncTaskLoader<Order> {
 
@@ -41,13 +52,40 @@ public class OrderLoader extends AsyncTaskLoader<Order> {
         // Create corresponding array of entries and load their labels.
         if(orderId == null)
         	orderId = "1";
-        Log.e("FETCH", "http://tapdservice.herokuapp.com/orders/" + orderId);
-        HttpRequest request = HttpRequest.get("http://tapdservice.herokuapp.com/orders/" + orderId);
+        Log.e("FETCH", "http://tapdservice.herokuapp.com/orders/current");
+        HttpRequest request = HttpRequest.get("http://tapdservice.herokuapp.com/orders/current");
+        //HttpRequest request = HttpRequest.get("http://tapdservice.herokuapp.com/orders/" + orderId);
 		int response = request.code();
         if(response == 200){
         	String body = request.body();
-        	order = mGson.fromJson(body, Order.class);
+        	try {
+				JSONObject obj = new JSONObject(body);
+				Order o = new Order();
+				o.setCreatedAt(obj.getLong("created_at"));
+				o.setPrice(obj.getDouble("total"));
+				o.setRestarauntName(obj.getString("restaurant_name"));
+				List<OrderItem> orderItems = new ArrayList<OrderItem>();
+				JSONArray array = obj.getJSONArray("order_items");
+				for(int i=0;i<array.length();i++){
+					JSONObject oio = array.getJSONObject(i);
+					OrderItem oi = new OrderItem();
+					oi.setQuantity(oio.getInt("quantity"));
+					
+					JSONObject io = oio.getJSONObject("item");
+					Item item = new Item();
+					item.setPrice(io.getDouble("price"));
+					item.setTitle(io.getString("title"));
+					oi.setItem(item);
+					orderItems.add(oi);
+				}
+				Log.e("TAGO", "" + o.getPrice());
+				return o;
+			} catch (JSONException e) {
+				
+			}
+        	
         }
+        Log.e("fetch", "" + (order == null));
         // Done!
         return order;
     }

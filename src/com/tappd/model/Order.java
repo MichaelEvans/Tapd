@@ -1,5 +1,6 @@
 package com.tappd.model;
 
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +18,10 @@ public class Order implements Parcelable{
 	private String restarauntName;
 	@SerializedName("order_items")
 	private List<OrderItem> orderItems;
+	@SerializedName("created_at")
+	private long createdAt;
+	@SerializedName("restaurant_url")
+	private String restaurantUrl;
 
     protected Order(Parcel in) {
         id = in.readInt();
@@ -25,9 +30,15 @@ public class Order implements Parcelable{
         restarauntName = in.readString();
         orderItems = new ArrayList<OrderItem>();
         in.readTypedList(orderItems, OrderItem.CREATOR);
+        createdAt = in.readLong();
+        restaurantUrl = in.readString();
     }
 
-    public int describeContents() {
+    public Order() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public int describeContents() {
         return 0;
     }
 
@@ -37,6 +48,8 @@ public class Order implements Parcelable{
         dest.writeDouble(price);
         dest.writeString(restarauntName);
         dest.writeTypedList(orderItems);
+        dest.writeLong(createdAt);
+        dest.writeString(restaurantUrl);
     }
 
     public static final Parcelable.Creator<Order> CREATOR = new Parcelable.Creator<Order>() {
@@ -87,5 +100,21 @@ public class Order implements Parcelable{
 
 	public void setRestarauntName(String restarauntName) {
 		this.restarauntName = restarauntName;
+	}
+
+	public long getCreatedAt() {
+		return createdAt;
+	}
+
+	public void setCreatedAt(long createdAt) {
+		this.createdAt = createdAt;
+	}
+
+	public String getRestaurantUrl() {
+		return restaurantUrl;
+	}
+
+	public void setRestaurantUrl(String restaurantUrl) {
+		this.restaurantUrl = restaurantUrl;
 	}
 }

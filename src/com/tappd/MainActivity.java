@@ -3,15 +3,6 @@ package com.tappd;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.common.GooglePlayServicesClient.ConnectionCallbacks;
-import com.google.android.gms.common.GooglePlayServicesClient.OnConnectionFailedListener;
-import com.google.android.gms.gcm.GoogleCloudMessaging;
-import com.google.android.gms.plus.PlusClient;
-import com.tappd.fragments.OrderFragment;
-import com.tappd.fragments.PurchasesFragment;
-
 import android.app.Activity;
 import android.app.FragmentTransaction;
 import android.content.Context;
@@ -24,7 +15,15 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesClient.ConnectionCallbacks;
+import com.google.android.gms.common.GooglePlayServicesClient.OnConnectionFailedListener;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.gcm.GoogleCloudMessaging;
+import com.google.android.gms.plus.PlusClient;
+import com.tappd.fragments.PurchasesFragment;
+import com.tappd.glass.GlassConfigActivity;
 
 public class MainActivity extends Activity implements ConnectionCallbacks, OnConnectionFailedListener {
 	private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
@@ -38,9 +37,9 @@ public class MainActivity extends Activity implements ConnectionCallbacks, OnCon
 	AtomicInteger msgId = new AtomicInteger();
 	SharedPreferences prefs;
 	Context context;
-	
+
 	String regid;
-	
+
 	private PlusClient mPlusClient;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -48,18 +47,18 @@ public class MainActivity extends Activity implements ConnectionCallbacks, OnCon
 		setContentView(R.layout.activity_main);
 
 		context = getApplicationContext();
-		
+
 		mPlusClient = new PlusClient.Builder(this, this, this)
 		.setVisibleActivities("http://schemas.google.com/AddActivity", "http://schemas.google.com/BuyActivity")
 		.build();
 
 		mPlusClient.connect();
-		
+
 		if (checkPlayServices()) {
 			gcm = GoogleCloudMessaging.getInstance(this);
 			regid = getRegistrationId(context);
 			Log.e(TAG, "REG:" + regid);
-			
+
 			if (regid.isEmpty()) {
 				registerInBackground();
 			}
@@ -75,15 +74,6 @@ public class MainActivity extends Activity implements ConnectionCallbacks, OnCon
 		return true;
 	}
 
-	public boolean onOptionsItemSelected(MenuItem item){
-		switch (item.getItemId()){
-		case R.id.action_swap: 
-			startActivity (new Intent (this, OrderActivity.class));
-			break;
-		} 
-		return true; 
-	}
-	
 	@Override
 	public void onConnectionFailed(ConnectionResult result) {
 		Intent i = new Intent(this, LoginActivity.class);
@@ -108,20 +98,20 @@ public class MainActivity extends Activity implements ConnectionCallbacks, OnCon
 	public void onDisconnected() {
 
 	}
-	
+
 	private boolean checkPlayServices() {
-	    int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
-	    if (resultCode != ConnectionResult.SUCCESS) {
-	        if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
-	            GooglePlayServicesUtil.getErrorDialog(resultCode, this,
-	                    PLAY_SERVICES_RESOLUTION_REQUEST).show();
-	        } else {
-	            Log.i(TAG, "This device is not supported.");
-	            finish();
-	        }
-	        return false;
-	    }
-	    return true;
+		int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+		if (resultCode != ConnectionResult.SUCCESS) {
+			if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
+				GooglePlayServicesUtil.getErrorDialog(resultCode, this,
+						PLAY_SERVICES_RESOLUTION_REQUEST).show();
+			} else {
+				Log.i(TAG, "This device is not supported.");
+				finish();
+			}
+			return false;
+		}
+		return true;
 	}
 
 	private String getRegistrationId(Context context) {
@@ -206,12 +196,21 @@ public class MainActivity extends Activity implements ConnectionCallbacks, OnCon
 	}
 
 	private void storeRegistrationId(Context context, String regId) {
-	    final SharedPreferences prefs = getGCMPreferences(context);
-	    int appVersion = getAppVersion(context);
-	    Log.i(TAG, "Saving regId on app version " + appVersion);
-	    SharedPreferences.Editor editor = prefs.edit();
-	    editor.putString(PROPERTY_REG_ID, regId);
-	    editor.putInt(PROPERTY_APP_VERSION, appVersion);
-	    editor.commit();
+		final SharedPreferences prefs = getGCMPreferences(context);
+		int appVersion = getAppVersion(context);
+		Log.i(TAG, "Saving regId on app version " + appVersion);
+		SharedPreferences.Editor editor = prefs.edit();
+		editor.putString(PROPERTY_REG_ID, regId);
+		editor.putInt(PROPERTY_APP_VERSION, appVersion);
+		editor.commit();
+	}
+
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.action_glass: 
+			startActivity(new Intent(this,  GlassConfigActivity.class));
+			return true; 
+		} 
+		return false; 
 	}
 }
